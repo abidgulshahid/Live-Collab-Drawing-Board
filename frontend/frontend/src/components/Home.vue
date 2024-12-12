@@ -6,18 +6,6 @@
       <!-- Drawing Board -->
       <v-col class="justify-center">
         <v-card class="drawing-card mx-auto elevation-10 rounded-lg">
-          <v-card-title class="text-h5 font-weight-bold">Drawing Board</v-card-title>
-          <v-card-text>
-            <canvas
-              ref="canvas"
-              @mousedown="startDrawing"
-              @mouseup="stopDrawing"
-              @mousemove="draw"
-              width="1300"
-              height="600"
-              style="border: 1px solid black;"
-            ></canvas>
-          </v-card-text>
           <v-card-actions class="d-flex justify-space-between">
             <v-btn color="secondary" @click="clearCanvas" class="mr-2">Clear</v-btn>
             <v-select
@@ -43,6 +31,18 @@
             ></v-text-field>
             <v-btn color="primary" @click="sendInvite" class="ml-2">Invite</v-btn>
           </v-card-actions>
+          <v-card-text>
+            <canvas
+              ref="canvas"
+              @mousedown="startDrawing"
+              @mouseup="stopDrawing"
+              @mousemove="draw"
+              width="1300"
+              height="600"
+              style="border: 1px solid black;"
+            ></canvas>
+          </v-card-text>
+
         </v-card>
       </v-col>
 
@@ -97,6 +97,8 @@ export default {
     const inviteUsername = ref('');
     const inviteDialog = ref(false);
     const inviteFrom = ref('');
+    const shareCount = ref(0);
+    const connectedUsers = ref([]);
 
     
 
@@ -116,6 +118,10 @@ export default {
         if (line.type === 'invite') {
           inviteFrom.value = line.from;
           inviteDialog.value = true; // Show the invite dialog
+        } else if (line.type === 'user-connected') {
+          connectedUsers.value.push(line.username); // Add new user to the list
+        } else if (line.type === 'user-disconnected') {
+          connectedUsers.value = connectedUsers.value.filter(user => user !== line.username); // Remove user from the list
         } else {
           drawLine(line.x, line.y, line.lastX, line.lastY, line.username);
         }
@@ -162,6 +168,7 @@ export default {
           from: username.value
         }));
         inviteUsername.value = ''; // Clear the input after sending
+        shareCount.value++;
       }
     };
 
@@ -194,6 +201,8 @@ export default {
       inviteFrom,
       acceptInvite,
       declineInvite,
+      shareCount,
+      connectedUsers,
     };
   },
 };
@@ -203,7 +212,7 @@ export default {
 
 <style scoped>
 .home-container {
-  background: linear-gradient(to right, #6a11cb, #2575fc);
+  /* background: linear-gradient(to right, #6a11cb, #2575fc); */
   padding-top: 1em;
 }
 

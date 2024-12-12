@@ -29,6 +29,9 @@ const userSockets = new Map();
 
 let clients = [];
 
+const connectedUsers = new Set(); // Set to store connected usernames
+const activeSessions = new Map(); 
+
 // WebSocket connection handling
 wsApp.ws('/*', {
     open: (ws) => {
@@ -43,7 +46,11 @@ wsApp.ws('/*', {
       if (data.type === 'register') {
         const { username } = data;
         userSockets.set(username, ws); // Store the user's socket
+        connectedUsers.add(username); // Add username to the set
         console.log(`${username} connected`);
+
+        // Notify all clients about the updated user list
+        broadcastUserList();
       }
   
       // Handle invite messages
@@ -51,41 +58,79 @@ wsApp.ws('/*', {
         const { username, from } = data;
         const targetUserSocket = getUserSocket(username);
         if (targetUserSocket) {
-          targetUserSocket.send(JSON.stringify({
-            type: 'invite',
-            from: from,
-            message: `${from} has invited you to draw together!`
-          }));
+            targetUserSocket.send(JSON.stringify({
+                type: 'invite',
+                from: from,
+                message: `${from} has invited you to draw together!`
+            }));
         } else {
-          console.log(`User ${username} not found`);
+            console.log(`User ${username} not found`);
         }
-      }
+    }
 
       // Handle invite acceptance
       if (data.type === 'invite-accepted') {
         const { from, to } = data;
+    
+        // Add both users to each other's active sessions
+        if (!activeSessions.has(from)) {
+            activeSessions.set(from, new Set());
+        }
+        if (!activeSessions.has(to)) {
+            activeSessions.set(to, new Set());
+        }
+        activeSessions.get(from).add(to);
+        activeSessions.get(to).add(from);
+    
+        // Notify the inviter
         const inviterSocket = getUserSocket(from);
         if (inviterSocket) {
-          inviterSocket.send(JSON.stringify({
-            type: 'invite-accepted',
-            message: `${to} has accepted your invite to draw together!`
+            inviterSocket.send(JSON.stringify({
+                type: 'invite-accepted',
+                message: `${to} has accepted your invite to draw together!`
+            }));
+        }
+    }
+
+      // Handle remove user command
+      if (data.type === 'remove-user') {
+        const { username } = data;
+        const targetUserSocket = getUserSocket(username);
+        if (targetUserSocket) {
+          targetUserSocket.send(JSON.stringify({
+            type: 'remove-user',
+            message: `You have been removed from the drawing board.`
           }));
+          targetUserSocket.close(); // Optionally close the connection
         }
       }
 
+
       // Broadcast the drawing data to all clients
+   
       ws.publish('draw', decodedMessage, isBinary);
   },
-    close: (ws, code, message) => {
-        clients = clients.filter(client => client !== ws);
-        for (const [username, socket] of userSockets.entries()) {
-          if (socket === ws) {
+  close: (ws, code, message) => {
+    clients = clients.filter(client => client !== ws);
+    for (const [username, socket] of userSockets.entries()) {
+        if (socket === ws) {
             userSockets.delete(username);
+            connectedUsers.delete(username);
+
+            // Remove the user from active sessions
+            activeSessions.delete(username);
+            for (const peers of activeSessions.values()) {
+                peers.delete(username);
+            }
+
             console.log(`${username} disconnected`);
+
+            // Notify all clients about the updated user list
+            broadcastUserList();
             break;
-          }
         }
     }
+}
 });
 
 
@@ -129,6 +174,20 @@ wsApp.listen(3001, (token) => {
 });
 
 app.use("/api/v1/user", userRouter);
+
+// Function to broadcast the list of connected users to all clients
+function broadcastUserList() {
+  const userList = Array.from(connectedUsers);
+  const message = JSON.stringify({
+    type: 'user-list',
+    users: userList
+  });
+
+  // Send the user list to all connected clients
+  for (const socket of userSockets.values()) {
+    socket.send(message);
+  }
+}
 
 // app.listen(port, () => {
 //   console.log(`Example app listening on port ${port}`)
