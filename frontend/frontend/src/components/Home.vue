@@ -39,6 +39,12 @@
               label="Enter Username"
               class="ml-2"
             ></v-text-field>
+            <v-text-field
+              v-model="inviteUsername"
+              label="Invite Username"
+              class="ml-2"
+            ></v-text-field>
+            <v-btn color="primary" @click="sendInvite">Invite</v-btn>
           </v-card-actions>
         </v-card>
       </v-col>
@@ -77,6 +83,7 @@ export default {
     const username = ref('');
     const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF']
     const selectedColor = ref('#000000');
+    const inviteUsername = ref('');
 
     
 
@@ -122,11 +129,24 @@ export default {
       ctx.value.stroke();
     };
 
+    const sendInvite = () => {
+      if (inviteUsername.value) {
+        socket.value.send(JSON.stringify({
+          type: 'invite',
+          username: inviteUsername.value,
+          from: username.value
+        }));
+        inviteUsername.value = ''; // Clear the input after sending
+      }
+    };
+
     return {
       canvas,
       startDrawing,
       stopDrawing,
       draw,
+      inviteUsername,
+      sendInvite,
     };
   },
 };
