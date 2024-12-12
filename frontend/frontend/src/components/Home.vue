@@ -5,16 +5,17 @@
 
       <!-- Drawing Board -->
       <v-col cols="12" md="6" class="justify-center">
-        <v-card class="drawing-card mx-auto mt-5 elevation-10 rounded-lg" max-width="580">
+        <v-card class="drawing-card mx-auto mt-5 elevation-10 rounded-lg " max-width="580" >
           <v-card-title class="text-h5 font-weight-bold">Drawing Board</v-card-title>
           <v-card-text>
             <canvas
-              ref="drawingCanvas"
-              class="drawing-canvas"
+              ref="canvas"
               @mousedown="startDrawing"
               @mouseup="stopDrawing"
               @mousemove="draw"
-              @mouseleave="stopDrawing"
+              width="800"
+              height="600"
+              style="border: 1px solid black;"
             ></canvas>
           </v-card-text>
           <v-card-actions>
@@ -26,6 +27,18 @@
               class="ml-2"
               color="black"
             ></v-select>
+            <v-select
+              v-model="selectedPenSize"
+              :items="penSizes"
+              label="Select Pen Size"
+              class="ml-2"
+              color="black"
+            ></v-select>
+            <v-text-field
+              v-model="username"
+              label="Enter Username"
+              class="ml-2"
+            ></v-text-field>
           </v-card-actions>
         </v-card>
       </v-col>
@@ -46,88 +59,80 @@
   </v-container>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useAuthStore } from '@/stores/auth'
-
-const authStore = useAuthStore()
-
-// Get user data from localStorage
-const user = computed(() => localStorage.getItem('username'))
-const access_token = computed(() => localStorage.getItem('access_token'))
-
-const journalText = ref('')
-const total_entries = ref('')
-const showSnackbar = ref(false)
-const successMessage = ref('')
-const snackbarTimeout = 2000 // Snackbar will be visible for 2 seconds
-
-const journalEntries = ref([]) // Reactive variable to store journal entries
-
-// Drawing board variables
-const drawingCanvas = ref(null)
-const ctx = ref(null)
-const isDrawing = ref(false)
-const selectedColor = ref('#000000')
-const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF']
-
-const submitJournalEntry = async () => {
-  const success = await authStore.add(journalText.value, access_token.value)
-  showSnackbar.value = true
-
-  if (success) {
-    successMessage.value = "Added"
-    journalText.value = '' // Clear the textarea after submission
-    listJournal() // Refresh the list of journal entries
-  } else {
-    successMessage.value = "Can't Submit Empty Thoughts"
-    journalText.value = '' // Clear the textarea after submission
-  }
-}
-
-const listJournal = async () => {
-  const response = await authStore.list(access_token.value)
-  if (response.data.text) {
-    total_entries.value = response.data.total_entries
-    journalEntries.value = response.data.text.sort((a, b) => new Date(b.date) - new Date(a.date))
-  }
-}
-
-// Drawing functions
-const startDrawing = (event) => {
-  isDrawing.value = true
-  draw(event)
-}
-
-const stopDrawing = () => {
-  isDrawing.value = false
-  ctx.value.beginPath() // Reset the path
-}
-
-const draw = (event) => {
-  if (!isDrawing.value) return
-  ctx.value.lineWidth = 5
-  ctx.value.lineCap = 'round'
-  ctx.value.strokeStyle = selectedColor.value
-
-  ctx.value.lineTo(event.offsetX, event.offsetY)
-  ctx.value.stroke()
-  ctx.value.beginPath()
-  ctx.value.moveTo(event.offsetX, event.offsetY)
-}
-
-const clearCanvas = () => {
-  ctx.value.clearRect(0, 0, drawingCanvas.value.width, drawingCanvas.value.height)
-}
-
-onMounted(() => {
-  ctx.value = drawingCanvas.value.getContext('2d')
-  drawingCanvas.value.width = 580 // Set canvas width
-  drawingCanvas.value.height = 400 // Set canvas height
-})
 
 
+<script>
+import { ref, onMounted } from 'vue';
+import { useDrawingStore } from '@/stores/drawingStore';
+
+export default {
+  setup() {
+    const canvas = ref(null);
+    const ctx = ref(null);
+    const isDrawing = ref(false);
+    const lastX = ref(0);
+    const lastY = ref(0);
+    const drawingStore = useDrawingStore();
+    const socket = ref(null);
+    const username = ref('');
+    const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF']
+    const selectedColor = ref('#000000');
+
+    
+
+    onMounted(() => {
+      ctx.value = canvas.value.getContext('2d');
+      socket.value = new WebSocket('ws://localhost:3001');
+
+      socket.value.onmessage = (event) => {
+        const line = JSON.parse(event.data);
+        drawLine(line.x, line.y, line.lastX, line.lastY, line.username);
+      };
+    });
+
+    const startDrawing = (event) => {
+      isDrawing.value = true;
+      [lastX.value, lastY.value] = [event.offsetX, event.offsetY];
+    };
+
+    const stopDrawing = () => {
+      isDrawing.value = false;
+    };
+
+    const draw = (event) => {
+      if (!isDrawing.value) return;
+      const { offsetX, offsetY } = event;
+      ctx.value.strokeStyle = selectedColor.value;
+      drawLine(offsetX, offsetY, lastX.value, lastY.value);
+      socket.value.send(JSON.stringify({
+        username: username.value,
+        x: offsetX,
+        y: offsetY,
+        lastX: lastX.value,
+        lastY: lastY.value
+      }));
+      [lastX.value, lastY.value] = [offsetX, offsetY];
+    };
+
+    const drawLine = (x, y, lastX, lastY, user) => {
+      ctx.value.beginPath();
+      ctx.value.moveTo(lastX, lastY);
+      ctx.value.lineTo(x, y);
+      ctx.value.strokeStyle = selectedColor.value;
+      ctx.value.stroke();
+    };
+
+    return {
+      canvas,
+      startDrawing,
+      stopDrawing,
+      draw,
+    };
+  },
+};
 </script>
+
+
 
 <style scoped>
 .home-container {
@@ -137,12 +142,14 @@ onMounted(() => {
 }
 
 .v-card {
-  background-color: #ffffff;
   border-radius: 16px;
+  background-color: white;
+  color: black;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
 .drawing-card {
+
   margin-top: 20px;
 }
 
