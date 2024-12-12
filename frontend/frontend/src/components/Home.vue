@@ -4,8 +4,8 @@
   
 
       <!-- Drawing Board -->
-      <v-col cols="12" md="6" class="justify-center">
-        <v-card class="drawing-card mx-auto mt-5 elevation-10 rounded-lg " max-width="580" >
+      <v-col class="justify-center">
+        <v-card class="drawing-card mx-auto  elevation-10 rounded-lg " >
           <v-card-title class="text-h5 font-weight-bold">Drawing Board</v-card-title>
           <v-card-text>
             <canvas
@@ -13,7 +13,7 @@
               @mousedown="startDrawing"
               @mouseup="stopDrawing"
               @mousemove="draw"
-              width="800"
+              width="1300"
               height="600"
               style="border: 1px solid black;"
             ></canvas>
@@ -137,7 +137,7 @@ export default {
 <style scoped>
 .home-container {
   background: linear-gradient(to right, #6a11cb, #2575fc);
-  min-height: 100vh;
+  /* min-height: 100vh; */
   padding-top: 100px;
 }
 
@@ -148,10 +148,7 @@ export default {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 }
 
-.drawing-card {
 
-  margin-top: 20px;
-}
 
 .drawing-canvas {
   border: 1px solid #ccc;
