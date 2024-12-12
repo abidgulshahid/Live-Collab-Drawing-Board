@@ -17,6 +17,8 @@ exports.home_api = async (req, res) => {
         return res.status(401).json({ message: "Invalid Access Token" });
       }
 
+      console.log("HOME HOME")
+
   
       return res
         .status(200)

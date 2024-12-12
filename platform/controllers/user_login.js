@@ -44,7 +44,7 @@ exports.login = async (req, res) => {
         { expiresIn: "6h" }
       );
  
-      console.log("HELLO")
+      console.log("HELLO", user)
         return res
         .status(200)
         .json({ 
