@@ -25,6 +25,8 @@ const mongoString = process.env.DATABASE_URL;
 // Create a uWebSocket server
 const wsApp = uWS.App();
 
+const userSockets = new Map();
+
 let clients = [];
 
 // WebSocket connection handling
@@ -36,15 +38,61 @@ wsApp.ws('/*', {
     },
     message: (ws, message, isBinary) => {
       const decodedMessage = Buffer.from(message).toString();
-      console.log(decodedMessage, 'decoded message')
+      const data = JSON.parse(decodedMessage)
+      console.log(data)
+      if (data.type === 'register') {
+        const { username } = data;
+        userSockets.set(username, ws); // Store the user's socket
+        console.log(`${username} connected`);
+      }
+  
+      // Handle invite messages
+      if (data.type === 'invite') {
+        const { username, from } = data;
+        const targetUserSocket = getUserSocket(username);
+        if (targetUserSocket) {
+          targetUserSocket.send(JSON.stringify({
+            type: 'invite',
+            from: from,
+            message: `${from} has invited you to draw together!`
+          }));
+        } else {
+          console.log(`User ${username} not found`);
+        }
+      }
+
+      // Handle invite acceptance
+      if (data.type === 'invite-accepted') {
+        const { from, to } = data;
+        const inviterSocket = getUserSocket(from);
+        if (inviterSocket) {
+          inviterSocket.send(JSON.stringify({
+            type: 'invite-accepted',
+            message: `${to} has accepted your invite to draw together!`
+          }));
+        }
+      }
+
       // Broadcast the drawing data to all clients
       ws.publish('draw', decodedMessage, isBinary);
   },
     close: (ws, code, message) => {
         clients = clients.filter(client => client !== ws);
+        for (const [username, socket] of userSockets.entries()) {
+          if (socket === ws) {
+            userSockets.delete(username);
+            console.log(`${username} disconnected`);
+            break;
+          }
+        }
     }
 });
 
+
+
+function getUserSocket(username) {
+  return userSockets.get(username); // 
+}
 
 // Connecting to Database
 mongoose.connect(mongoString);
