@@ -12,14 +12,32 @@
 import { ref, onMounted } from 'vue';
 import { useDrawingStore } from '@/stores/drawingStore';
 import axios from 'axios';
+import { useRouter } from 'vue-router'; // Importing useRouter
+
 
 export default {
   setup() {
     const drawingStore = useDrawingStore();
+    const router = useRouter(); // Using the router
+
 
     const startSession = async () => {
       try {
-        const response = await axios.post('YOUR_API_ENDPOINT');
+        const response = await axios.post('http://localhost:4000/api/v1/user/create_session/', {
+          access_token: localStorage.getItem('access_token')
+        }, {
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-type': 'application/json',
+            access_token: localStorage.getItem('access_token'),
+          }
+        })
+
+        console.log('Hello World', response)
+        const uuid = response.data.uuid;
+
+        router.push({path: `board/${uuid}`})
+
         drawingStore.setSessionData(response.data);
       } catch (error) {
         console.error('Error starting session:', error);
