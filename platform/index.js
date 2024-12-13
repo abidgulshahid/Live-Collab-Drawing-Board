@@ -37,7 +37,7 @@ wsApp.ws('/*', {
     open: (ws) => {
         clients.push(ws);
         ws.subscribe('draw')
-        console.log(ws)
+        console.log(ws, 'ws')
     },
     message: (ws, message, isBinary) => {
       const decodedMessage = Buffer.from(message).toString();
@@ -50,37 +50,21 @@ wsApp.ws('/*', {
         console.log(`${username} connected`);
 
         // Notify all clients about the updated user list
-        broadcastUserList();
+        // broadcastUserList();
       }
   
-      // Handle invite messages
-      if (data.type === 'invite') {
-        const { username, from } = data;
-        const targetUserSocket = getUserSocket(username);
-        if (targetUserSocket) {
-            targetUserSocket.send(JSON.stringify({
-                type: 'invite',
-                from: from,
-                message: `${from} has invited you to draw together!`
-            }));
-        } else {
-            console.log(`User ${username} not found`);
-        }
-    }
-
+    // ... existing code ...
       // Handle invite acceptance
       if (data.type === 'invite-accepted') {
         const { from, to } = data;
     
-        // Add both users to each other's active sessions
-        if (!activeSessions.has(from)) {
-            activeSessions.set(from, new Set());
+        // Create a session for the users if it doesn't exist
+        const sessionId = `${from}-${to}`; // Unique session ID based on usernames
+        if (!activeSessions.has(sessionId)) {
+            activeSessions.set(sessionId, new Set());
         }
-        if (!activeSessions.has(to)) {
-            activeSessions.set(to, new Set());
-        }
-        activeSessions.get(from).add(to);
-        activeSessions.get(to).add(from);
+        activeSessions.get(sessionId).add(from);
+        activeSessions.get(sessionId).add(to);
     
         // Notify the inviter
         const inviterSocket = getUserSocket(from);
@@ -90,7 +74,26 @@ wsApp.ws('/*', {
                 message: `${to} has accepted your invite to draw together!`
             }));
         }
-    }
+      }
+      console.log(data)
+      // Handle drawing data exchange for the session
+      if (data.draw === 'draw') {
+        const { sessionId, drawingData } = data; // Assuming drawingData is sent with the message
+        const sessionClients = activeSessions.get(sessionId);
+        if (sessionClients) {
+            for (const username of sessionClients) {
+                const userSocket = getUserSocket(username);
+                if (userSocket) {
+                  ws.publish('draw', decodedMessage, isBinary);
+                    userSocket.send(JSON.stringify({
+                        type: 'draw',
+                        drawingData: drawingData
+                    }));
+                }
+            }
+        }
+      }
+// ... existing code ...
 
       // Handle remove user command
       if (data.type === 'remove-user') {
@@ -105,10 +108,19 @@ wsApp.ws('/*', {
         }
       }
 
+ 
+
+      if (data.signal == 'true'){
+        console.log("HELLO WORLD")
+
+      }
+
 
       // Broadcast the drawing data to all clients
-   
+
       ws.publish('draw', decodedMessage, isBinary);
+
+   
   },
   close: (ws, code, message) => {
     clients = clients.filter(client => client !== ws);
@@ -132,6 +144,7 @@ wsApp.ws('/*', {
     }
 }
 });
+
 
 
 
@@ -176,7 +189,9 @@ wsApp.listen(3001, (token) => {
 app.use("/api/v1/user", userRouter);
 
 // Function to broadcast the list of connected users to all clients
+
 function broadcastUserList() {
+
   const userList = Array.from(connectedUsers);
   const message = JSON.stringify({
     type: 'user-list',
@@ -188,6 +203,7 @@ function broadcastUserList() {
     socket.send(message);
   }
 }
+
 
 // app.listen(port, () => {
 //   console.log(`Example app listening on port ${port}`)
