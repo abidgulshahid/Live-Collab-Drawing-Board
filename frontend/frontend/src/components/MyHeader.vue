@@ -15,7 +15,7 @@
         class="nav-btn"
         prepend-icon="mdi-home"
       >
-        Home {{ total_entries || 5 }}
+        Home 
       </v-btn>
       <v-btn 
         text 
