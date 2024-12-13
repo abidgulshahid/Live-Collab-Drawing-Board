@@ -2,8 +2,8 @@
   <v-container fluid class="signup-container">
     <v-row no-gutters class="justify-center">
       <v-col cols="12" sm="10" md="8" lg="6">
-        <v-card class="pa-8 rounded-lg elevation-12" color="#ffffff">
-          <v-card-title class="text-h4 font-weight-bold text-center mb-4">
+        <v-card class="pa-6 rounded-lg elevation-8" color="#f9f9f9">
+          <v-card-title class="text-h5 font-weight-bold text-center mb-4">
             Create Your Account
           </v-card-title>
           
@@ -16,7 +16,7 @@
                 variant="outlined"
                 prepend-inner-icon="mdi-account"
                 density="comfortable"
-                class="mb-4"
+                class="mb-3"
               ></v-text-field>
 
               <v-text-field
@@ -26,7 +26,7 @@
                 variant="outlined"
                 prepend-inner-icon="mdi-account-circle"
                 density="comfortable"
-                class="mb-4"
+                class="mb-3"
               ></v-text-field>
 
               <v-text-field
@@ -36,7 +36,7 @@
                 variant="outlined"
                 prepend-inner-icon="mdi-email"
                 density="comfortable"
-                class="mb-4"
+                class="mb-3"
               ></v-text-field>
 
               <v-text-field
@@ -46,7 +46,7 @@
                 variant="outlined"
                 prepend-inner-icon="mdi-map-marker"
                 density="comfortable"
-                class="mb-4"
+                class="mb-3"
               ></v-text-field>
 
               <v-text-field
@@ -59,7 +59,7 @@
                 density="comfortable"
                 :type="showPassword ? 'text' : 'password'"
                 @click:append-inner="showPassword = !showPassword"
-                class="mb-4"
+                class="mb-3"
               ></v-text-field>
 
               <v-text-field
@@ -83,7 +83,7 @@
               size="large"
               block
               @click="signup"
-              class="mb-2 rounded-lg gradient-button"
+              class="mb-2 rounded-lg"
             >
               Sign Up
             </v-btn>
@@ -182,7 +182,6 @@ const signup = async () => {
 
 <style scoped>
 .signup-container {
-  background: linear-gradient(to right, #6a11cb, #2575fc);
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -190,9 +189,9 @@ const signup = async () => {
 }
 
 .v-card {
-  background-color: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .v-text-field {
@@ -205,7 +204,7 @@ const signup = async () => {
 
 .v-btn {
   text-transform: none;
-  font-weight: 500;
+  font-weight: 600;
   transition: background-color 0.3s, transform 0.2s;
 }
 
