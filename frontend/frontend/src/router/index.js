@@ -3,6 +3,7 @@ import Login from '../components/LoginForm.vue'
 import Signup from '../components/SignupFrom.vue'
 import Home from '@/components/Home.vue'
 import Profile from '@/components/Profile.vue'
+import Canvas from '@/components/Canvas.vue'
 
 const routes = [
   {
@@ -30,6 +31,13 @@ const routes = [
     path: '/profile',
     name: 'profile',
     component: Profile,
+    meta: {reload:true, requiresAuth: true}
+
+  },
+  {
+    path: '/board/:id',
+    name: 'board', 
+    component: Canvas,
     meta: {reload:true, requiresAuth: true}
 
   }
