@@ -87,9 +87,9 @@
             >
               Sign Up
             </v-btn>
-            <div class="text-body-2 text-medium-emphasis">
+            <div class="text-body-2 text-medium-emphasis" style="color: black;">
               Already have an account?
-              <router-link to="/login" class="text-decoration-none">Login</router-link>
+              <router-link to="/login" class="text-decoration-none" style="color: black;">Login</router-link>
             </div>
           </v-card-actions>
         </v-card>
