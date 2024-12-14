@@ -92,13 +92,30 @@ const showSnackbar = ref(false)
 const successMessage = ref('')
 const snackbarTimeout = 3000 // Snackbar will be visible for 3 seconds
 
+console.log(isLoggedIn, 'logged')
+
 
 const logout = async () => {
   console.log(access_token.value, 'access_token.value in header file')
   const success = await authStore.logout(access_token.value)
+  console.log(success, 'success')
 
   if (success){
-    router.path('/login')
+    localStorage.removeItem('username')
+    localStorage.removeItem('full_name')
+    localStorage.removeItem('access_token')
+    authStore.user = null // Assuming this updates the store state
+    showSnackbar.value = true // Show snackbar for logout success
+    successMessage.value = 'Logout successful. Redirecting...'
+
+    // Navigate to login after a brief delay to show the message
+    setTimeout(() => {
+      router.push('/login') // Navigate to login
+    }, 1000); // 1 second delay
+
+
+
+
   }
   else {
     showSnackbar.value = true
@@ -106,6 +123,10 @@ const logout = async () => {
   }
 
 }
+
+
+
+
 </script>
 
 <style scoped>

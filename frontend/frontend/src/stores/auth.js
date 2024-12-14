@@ -129,8 +129,9 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async logout(access_token) {
+
+      console.log(access_token)
       try {
-        localStorage.clear()
 
         console.log("IN AUTH LOGOUT ", access_token)
         const response =  await axios({
@@ -146,9 +147,7 @@ export const useAuthStore = defineStore('auth', {
 
         if (response.status == 200) { 
 
-          localStorage.clear()
-          this.user = false
-          router.push('/login')
+    return true
   
         }
 

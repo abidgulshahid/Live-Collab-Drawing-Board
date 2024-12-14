@@ -1,13 +1,15 @@
-<template>
+ <template>
     <v-container fluid class="home-container">
       <v-row no-gutters class="justify-center">
     
   
-        <!-- Drawing Board -->
         <v-col class="justify-center">
           <v-card class="drawing-card mx-auto elevation-10 rounded-lg">
             <v-card-actions class="d-flex justify-space-between">
-              <v-btn color="secondary" @click="clearCanvas" class="mr-2">Clear</v-btn>
+              <v-btn color="secondary" @click="toggleEraser" class="mr-2">
+                <v-icon>{{ isEraser ? 'mdi-pencil' : 'mdi-eraser' }}</v-icon>
+                {{ isEraser ? 'Draw' : 'Eraser' }}
+              </v-btn>
               <v-select
                 v-model="selectedColor"
                 :items="colors"
@@ -33,17 +35,15 @@
                 @mousemove="draw"
                 width="1300"
                 height="600"
-                style="border: 1px solid black;"
+                :style="{ border: '1px solid black', cursor: isEraser ? 'url(eraser-icon.png) 10 10, auto' : 'crosshair' }"
               ></canvas>
             </v-card-text>
   
           </v-card>
         </v-col>
   
-        <!-- Save Button -->
         
   
-        <!-- Display connected users -->
         <v-card class="mx-auto" style="margin-top: 20px; padding: 10px;">
           <h3>Connected Users</h3>
           <v-list>
@@ -64,7 +64,6 @@
           </v-list>
         </v-card>
   
-        <!-- Snackbar for success message -->
         <v-snackbar
           v-model="showSnackbar"
           :timeout="snackbarTimeout"
@@ -75,7 +74,6 @@
           {{ successMessage }}
         </v-snackbar>
   
-        <!-- Invite Notification -->
         <v-dialog v-model="inviteDialog" max-width="290">
           <v-card>
             <v-card-title class="headline">Invite Received</v-card-title>
@@ -90,9 +88,8 @@
         </v-dialog>
       </v-row>
   
-      <!-- Other sections for journal entries... -->
     </v-container>
-  </template>
+  </template> -->
   
   
   
@@ -124,6 +121,13 @@
       const selectedPenSize = ref(2);
       const currentUser = ref(username.value);
       const route = useRoute(); // Get the current route
+      var getUUID = route.params
+      if (getUUID.id){ 
+        localStorage.setItem('uuid', getUUID.id)
+      }
+      const isEraser = ref(false); // New state for eraser mode
+      const drawnLines = ref([]); // Store drawn lines for redrawing
+
 
 
   
@@ -131,31 +135,33 @@
   
       onMounted(() => {
         ctx.value = canvas.value.getContext('2d');
-        socket.value = new WebSocket('ws://localhost:3001');
+        socket.value = new WebSocket(`ws://localhost:3001/boards/${getUUID.id}`);
   
         socket.value.onopen = () => {
           console.log('WebSocket connection established');
           // Register the user
           socket.value.send(JSON.stringify({
             type: 'register',
-            username: currentUser.value, // Send the username to the server
+            username: currentUser.value, 
+            uuid: getUUID.id
  
           }));
   
         };
   
         socket.value.onmessage = (event) => {
-          console.log("HELLO")
+          console.log(event, 'event')
           const line = JSON.parse(event.data);
-          if (line.type === 'invite') {
-            inviteFrom.value = line.from;
-            inviteDialog.value = true; // Show the invite dialog
-          } else if (line.type === 'user-connected') {
+        
+          if (line.type === 'user-connected') {
             connectedUsers.value.push(line.username); // Add new user to the list
           } else if (line.type === 'user-disconnected') {
             connectedUsers.value = connectedUsers.value.filter(user => user !== line.username); // Remove user from the list
           } else if (line.type === 'cursor-update') {
             drawCursor(line.username, line.x, line.y);
+          } else if (line.type === 'eraser') {
+            // Handle eraser action from another client
+            ctx.value.clearRect(line.x - line.penSize / 2, line.y - line.penSize / 2, line.penSize, line.penSize);
           } else {
             drawLine(line.x, line.y, line.lastX, line.lastY, line.username);
           }
@@ -191,25 +197,41 @@
       const draw = (event) => {
         if (!isDrawing.value) return;
         const { offsetX, offsetY } = event;
-        ctx.value.strokeStyle = selectedColor.value;
-        ctx.value.lineWidth = selectedPenSize.value;
-        drawLine(offsetX, offsetY, lastX.value, lastY.value);
-        socket.value.send(JSON.stringify({
-          x: offsetX,
-          y: offsetY,
-          lastX: lastX.value,
-          lastY: lastY.value,
-          
-        }));
+        if (isEraser.value) {
+          // Send eraser action to the server
+          socket.value.send(JSON.stringify({
+            type: 'eraser',
+            x: offsetX,
+            y: offsetY,
+            penSize: selectedPenSize.value,
+          }));
+          // Clear the area on the local canvas
+          ctx.value.clearRect(offsetX - selectedPenSize.value / 2, offsetY - selectedPenSize.value / 2, selectedPenSize.value, selectedPenSize.value);
+        } else {
+          drawLine(offsetX, offsetY, lastX.value, lastY.value);
+          socket.value.send(JSON.stringify({
+            x: offsetX,
+            y: offsetY,
+            lastX: lastX.value,
+            lastY: lastY.value,
+          }));
+        }
         [lastX.value, lastY.value] = [offsetX, offsetY];
       };
   
       const drawLine = (x, y, lastX, lastY, user) => {
-        ctx.value.beginPath();
-        ctx.value.moveTo(lastX, lastY);
-        ctx.value.lineTo(x, y);
-        ctx.value.strokeStyle = selectedColor.value;
-        ctx.value.stroke();
+        if (isEraser.value) {
+          // If in eraser mode, we don't draw a line but clear the area
+          ctx.value.clearRect(x - selectedPenSize.value / 2, y - selectedPenSize.value / 2, selectedPenSize.value, selectedPenSize.value);
+        } else {
+          ctx.value.beginPath();
+          ctx.value.moveTo(lastX, lastY);
+          ctx.value.lineTo(x, y);
+          ctx.value.strokeStyle = selectedColor.value;
+          ctx.value.lineWidth = selectedPenSize.value;
+          ctx.value.stroke();
+          drawnLines.value.push({ x, y, lastX, lastY, user }); // Store the drawn line
+        }
       };
 
   
@@ -233,6 +255,22 @@
         link.click(); // Programmatically click the link to trigger the download
       };
   
+      const toggleEraser = () => {
+        isEraser.value = !isEraser.value; // Toggle eraser mode
+      };
+  
+      const redrawCanvas = () => {
+        ctx.value.clearRect(0, 0, canvas.value.width, canvas.value.height); // Clear the canvas
+        drawnLines.value.forEach(line => {
+          ctx.value.beginPath();
+          ctx.value.moveTo(line.lastX, line.lastY);
+          ctx.value.lineTo(line.x, line.y);
+          ctx.value.strokeStyle = line.user === currentUser.value ? selectedColor.value : 'black'; // Differentiate user lines
+          ctx.value.lineWidth = selectedPenSize.value;
+          ctx.value.stroke();
+        });
+      };
+  
       return {
         canvas,
         startDrawing,
@@ -244,8 +282,10 @@
         penSizes,
         selectedPenSize,
         currentUser,
-    
         saveCanvas,
+        isEraser,
+        toggleEraser,
+        redrawCanvas,
       };
     },
   };
@@ -255,7 +295,6 @@
   
   <style scoped>
   .home-container {
-    /* background: linear-gradient(to right, #6a11cb, #2575fc); */
     padding-top: 1em;
   }
   
@@ -280,6 +319,3 @@
     pointer-events: none;
   }
   </style>
-  
-  
-  
