@@ -1,8 +1,8 @@
 <template>
     <v-container width="1000">
       <v-row no-gutters class=" justify-center">
-        <v-col cols="12" md="6" class=" justify-center">
-          <v-card class="pa-4">
+        <v-col cols="12" md="8" class=" justify-center">
+          <v-card class="pa-6" style="color: black; background-color: whitesmoke;">
             <v-card-title>Profile, </v-card-title>
    
             <v-form>

@@ -22,14 +22,8 @@
                 class="ml-2"
                 color="black"
               ></v-select>
+              <v-btn color="primary" @click="saveCanvas">Save Drawing</v-btn>
    
-              <v-text-field
-                v-model="inviteUsername"
-                label="Invite Username"
-                class="ml-2"
-                outlined
-              ></v-text-field>
-              <v-btn color="primary" @click="sendInvite" class="ml-2">Invite</v-btn>
             </v-card-actions>
             <v-card-text>
               <canvas
@@ -45,6 +39,30 @@
   
           </v-card>
         </v-col>
+  
+        <!-- Save Button -->
+        
+  
+        <!-- Display connected users -->
+        <v-card class="mx-auto" style="margin-top: 20px; padding: 10px;">
+          <h3>Connected Users</h3>
+          <v-list>
+            <v-list-item-group>
+              <v-list-item v-for="user in connectedUsers" :key="user">
+                <v-list-item-content>
+                  <v-list-item-title>{{ user }}</v-list-item-title>
+                  <canvas
+                    v-if="user === currentUser"
+                    :style="{ position: 'absolute', left: cursorX + 'px', top: cursorY + 'px' }"
+                    width="20"
+                    height="20"
+                    class="cursor"
+                  ></canvas>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list-item-group>
+          </v-list>
+        </v-card>
   
         <!-- Snackbar for success message -->
         <v-snackbar
@@ -92,14 +110,18 @@
       const lastY = ref(0);
       const drawingStore = useDrawingStore();
       const socket = ref(null);
-      const username = ref('');
-      const colors = ['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF']
+      const username = ref(localStorage.getItem('username'));
+      const colors = ref(['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF']);
       const selectedColor = ref('#000000');
       const inviteUsername = ref('');
       const inviteDialog = ref(false);
       const inviteFrom = ref('');
       const shareCount = ref(0);
       const connectedUsers = ref([]);
+      const penSizes = ref([1, 2, 5, 10, 15]);
+      const selectedPenSize = ref(2);
+      const currentUser = ref(username.value);
+
   
       
   
@@ -108,9 +130,11 @@
         socket.value = new WebSocket('ws://localhost:3001');
   
         socket.value.onopen = () => {
+          console.log('WebSocket connection established');
+          // Register the user
           socket.value.send(JSON.stringify({
             type: 'register',
-            username: localStorage.getItem('username') // Assuming the username is stored in localStorage
+            username: currentUser.value // Send the username to the server
           }));
   
           // Retrieve session data from local storage
@@ -142,10 +166,29 @@
             connectedUsers.value.push(line.username); // Add new user to the list
           } else if (line.type === 'user-disconnected') {
             connectedUsers.value = connectedUsers.value.filter(user => user !== line.username); // Remove user from the list
+          } else if (line.type === 'cursor-update') {
+            drawCursor(line.username, line.x, line.y);
           } else {
             drawLine(line.x, line.y, line.lastX, line.lastY, line.username);
           }
         };
+  
+        socket.value.onclose = () => {
+          console.log('WebSocket connection closed');
+        };
+  
+        socket.value.onerror = (error) => {
+          console.error('WebSocket error:', error);
+        };
+  
+        const canvasElement = document.querySelector('canvas');
+        canvasElement.addEventListener('mousemove', (event) => {
+       
+          socket.value.send(JSON.stringify({
+            username: currentUser.value,
+           
+          }));
+        });
       });
   
       const startDrawing = (event) => {
@@ -161,6 +204,7 @@
         if (!isDrawing.value) return;
         const { offsetX, offsetY } = event;
         ctx.value.strokeStyle = selectedColor.value;
+        ctx.value.lineWidth = selectedPenSize.value;
         drawLine(offsetX, offsetY, lastX.value, lastY.value);
         socket.value.send(JSON.stringify({
           x: offsetX,
@@ -180,61 +224,26 @@
         ctx.value.strokeStyle = selectedColor.value;
         ctx.value.stroke();
       };
+
   
-      const sendInvite = () => {
-        if (inviteUsername.value) {
-          const uniqueUrl = `http://localhost:3000/join/${inviteUsername.value}`; // Generate a unique URL
-          socket.value.send(JSON.stringify({
-            type: 'invite',
-            username: inviteUsername.value,
-            from: localStorage.getItem('username'),
-            url: uniqueUrl // Include the URL in the invite
-          }));
-          inviteUsername.value = ''; // Clear the input after sending
-          shareCount.value++;
-        }
+      const drawCursor = (username, x, y) => {
+        const canvas = document.querySelector('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'red';
+        ctx.beginPath();
+        ctx.arc(x, y, 10, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'black';
+        ctx.fillText(username, x + 12, y);
       };
   
-      const acceptInvite = async () => {
-        // Logic to join the collaboration
-        inviteDialog.value = false; // Close the dialog
-        console.log(`${inviteFrom.value} accepted the invite to draw together.`);
-        
-        // Save session information in local storage
-        const sessionInfo = {
-          from: localStorage.getItem('username'),
-          to: inviteFrom.value,
-          // Add any other relevant session data here
-        };
-        localStorage.setItem('drawingSession', JSON.stringify(sessionInfo));
-        localStorage.setItem('signal', true);
-  
-        // Send session data to the backend
-        try {
-          await axios.post('http://localhost:4000/api/v1/session', sessionInfo);
-          console.log('Session data sent to backend successfully.');
-        } catch (error) {
-          console.error('Error sending session data to backend:', error);
-        }
-  
-        // Notify the inviter
-        socket.value.send(JSON.stringify({
-          type: 'invite-accepted',
-          from: localStorage.getItem('username'),
-          to: inviteFrom.value
-        }));
-      };
-  
-      const declineInvite = () => {
-        inviteDialog.value = false; // Close the dialog
-        console.log(`${inviteFrom.value} declined the invite.`);
-      };
-  
-      // Add a method to handle joining the board via URL
-      const joinBoard = (username) => {
-        inviteFrom.value = username; // Set the inviter's username
-        inviteDialog.value = true; // Show the invite dialog
-        // Additional logic to join the board can be added here
+      const saveCanvas = () => {
+        const canvasElement = canvas.value; // Get the canvas element
+        const dataURL = canvasElement.toDataURL('image/png'); // Convert canvas to image URL
+        const link = document.createElement('a'); // Create a link element
+        link.href = dataURL; // Set the link's href to the image URL
+        link.download = 'drawing.png'; // Set the default file name
+        link.click(); // Programmatically click the link to trigger the download
       };
   
       return {
@@ -242,15 +251,14 @@
         startDrawing,
         stopDrawing,
         draw,
-        inviteUsername,
-        sendInvite,
-        inviteDialog,
-        inviteFrom,
-        acceptInvite,
-        declineInvite,
-        shareCount,
         connectedUsers,
-        joinBoard,
+        colors,
+        selectedColor,
+        penSizes,
+        selectedPenSize,
+        currentUser,
+    
+        saveCanvas,
       };
     },
   };
@@ -278,6 +286,11 @@
   .snackbar {
     border-radius: 8px;
     font-weight: bold;
+  }
+  
+  .cursor {
+    position: absolute;
+    pointer-events: none;
   }
   </style>
   
