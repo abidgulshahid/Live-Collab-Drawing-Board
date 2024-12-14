@@ -1,8 +1,8 @@
 <template>
   <v-container class="login-container">
     <v-row no-gutters class="justify-center">
-      <v-col cols="12" sm="8" md="6" lg="4">
-        <v-card class="login-card" elevation="3">
+      <v-col cols="8">
+        <v-card class="login-card" style="background-color: whitesmoke; color: black;">
           <v-card-title class="text-center text-h4 font-weight-bold mb-6">
             Welcome Back
           </v-card-title>
@@ -44,9 +44,9 @@
             </v-form>
           </v-card-text>
 
-          <v-card-text class="text-center">
-            <router-link to="/signup" class="text-decoration-none">
-              Don't have an account? <span class="font-weight-bold primary--text">Sign up</span>
+          <v-card-text class="text-center" style="color: black;">
+            <router-link to="/signup" class="text-decoration" style="color: black;">
+              Don't have an account? <span class="font-weight-bold primary--text" style="color: black;">Sign up</span>
             </router-link>
           </v-card-text>
         </v-card>
@@ -115,7 +115,6 @@ const login = async () => {
   min-height: 100vh;
   display: flex;
   align-items: center;
-  background-color: #f5f5f5;
 }
 
 .login-card {
