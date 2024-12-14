@@ -42,7 +42,7 @@ wsApp.ws('/*', {
     message: (ws, message, isBinary) => {
       const decodedMessage = Buffer.from(message).toString();
       const data = JSON.parse(decodedMessage)
-      console.log(data)
+      console.log(data, 'data')
       if (data.type === 'register') {
         const { username } = data;
         userSockets.set(username, ws); // Store the user's socket

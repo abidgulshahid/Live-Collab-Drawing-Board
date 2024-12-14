@@ -100,6 +100,8 @@
   import { ref, onMounted } from 'vue';
   import { useDrawingStore } from '@/stores/drawingStore';
   import axios from 'axios';
+  import { useRoute } from 'vue-router'; // Import useRoute
+
   
   export default {
     setup() {
@@ -121,6 +123,8 @@
       const penSizes = ref([1, 2, 5, 10, 15]);
       const selectedPenSize = ref(2);
       const currentUser = ref(username.value);
+      const route = useRoute(); // Get the current route
+
 
   
       
@@ -134,26 +138,10 @@
           // Register the user
           socket.value.send(JSON.stringify({
             type: 'register',
-            username: currentUser.value // Send the username to the server
+            username: currentUser.value, // Send the username to the server
+ 
           }));
   
-          // Retrieve session data from local storage
-          const sessionData = JSON.parse(localStorage.getItem('drawingSession'));
-          if (sessionData) {
-            for (const line of sessionData.lines) {
-              drawLine(line.x, line.y, line.lastX, line.lastY, line.username);
-            }
-            username.value = sessionData.username;
-            colors = sessionData.colors;
-            selectedColor.value = sessionData.selectedColor;
-            inviteUsername.value = sessionData.inviteUsername;
-            inviteDialog.value = sessionData.inviteDialog;
-            inviteFrom.value = sessionData.inviteFrom;
-            shareCount.value = sessionData.shareCount;
-            connectedUsers.value = sessionData.connectedUsers;
-            // Logic to restore the session (e.g., draw previous lines)
-            // You can implement this based on your drawing logic
-          }
         };
   
         socket.value.onmessage = (event) => {
@@ -211,7 +199,6 @@
           y: offsetY,
           lastX: lastX.value,
           lastY: lastY.value,
-          signal: localStorage.getItem('signal')
           
         }));
         [lastX.value, lastY.value] = [offsetX, offsetY];
