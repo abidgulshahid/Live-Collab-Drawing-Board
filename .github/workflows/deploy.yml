@@ -68,7 +68,7 @@ jobs:
           # Deploy your Node.js app (example using Elastic Beanstalk)
           cd platform
           eb init -p node.js --region $AWS_REGION
-          eb deploy backend-env-1
+          eb deploy Backend-3-env
 
       - name: Upload Vue.js build to S3
         run: |
