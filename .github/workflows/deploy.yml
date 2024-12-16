@@ -3,7 +3,7 @@ name: Deploy to AWS
 on:
   push:
     branches:
-      - main  # Change this to your default branch
+      - default  # Change this to your default branch
 
 jobs:
   build:
@@ -69,7 +69,8 @@ jobs:
           cd platform
           eb init -p node.js --region $AWS_REGION
           eb use Prod-env-1
-          eb deploy --label github-actions-${{ github.run_id }} 
+          eb deploy only
+        #--label github-actions-${{ github.run_id }} 
 
       - name: Upload Vue.js build to S3
         run: |
