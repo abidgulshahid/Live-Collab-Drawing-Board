@@ -22,14 +22,13 @@ init()
 const mongoString = process.env.DATABASE_URL;
 
 
-// Create a uWebSocket server
 const wsApp = uWS.App();
 
 const userSockets = new Map();
 
 let clients = [];
 
-const connectedUsers = new Set(); // Set to store connected usernames
+const connectedUsers = new Set(); 
 const activeSessions = new Map(); 
 
 // WebSocket connection handling
@@ -37,29 +36,22 @@ wsApp.ws('/*', {
     open: (ws) => {
         clients.push(ws);
         ws.subscribe('draw')
-        console.log(ws, 'ws')
     },
     message: (ws, message, isBinary) => {
       const decodedMessage = Buffer.from(message).toString();
       const data = JSON.parse(decodedMessage)
-      console.log(data, 'data')
       if (data.type === 'register') {
         const { username } = data;
-        userSockets.set(username, ws); // Store the user's socket
-        connectedUsers.add(username); // Add username to the set
-        console.log(`${username} connected`);
+        userSockets.set(username, ws); 
+        connectedUsers.add(username); 
 
-        // Notify all clients about the updated user list
-        // broadcastUserList();
       }
-  
-    // ... existing code ...
-      // Handle invite acceptance
+
       if (data.type === 'invite-accepted') {
         const { from, to } = data;
     
-        // Create a session for the users if it doesn't exist
-        const sessionId = `${from}-${to}`; // Unique session ID based on usernames
+       
+        const sessionId = `${from}-${to}`; 
         if (!activeSessions.has(sessionId)) {
             activeSessions.set(sessionId, new Set());
         }
@@ -75,8 +67,6 @@ wsApp.ws('/*', {
             }));
         }
       }
-      console.log(data)
-      // Handle drawing data exchange for the session
       if (data.draw === 'draw') {
         const { sessionId, drawingData } = data; // Assuming drawingData is sent with the message
         const sessionClients = activeSessions.get(sessionId);
@@ -93,7 +83,6 @@ wsApp.ws('/*', {
             }
         }
       }
-// ... existing code ...
 
       // Handle remove user command
       if (data.type === 'remove-user') {

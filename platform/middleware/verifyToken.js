@@ -1,6 +1,6 @@
 const client = require('../Utils/redis_connection')
 const jwt = require("jsonwebtoken");
-const {User, Journal}  = require("../models/user_models");
+const {User}  = require("../models/user_models");
 
 exports.verifyToken = async (req, res, next)  =>
     { 
