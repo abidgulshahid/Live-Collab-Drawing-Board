@@ -56,7 +56,8 @@ jobs:
       - name: Install AWS Elastic Beanstalk CLI
         run: |
           pip install awsebcli --upgrade --user
-          echo "::add-path::$(python -m site --user-base)/bin"
+          echo "${{ runner.tool_cache }}/python/bin" >> $GITHUB_PATH
+
 
       - name: Deploy to AWS
         env:
