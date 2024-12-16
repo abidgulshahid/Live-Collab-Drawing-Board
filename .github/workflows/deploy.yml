@@ -69,8 +69,7 @@ jobs:
           cd platform
           eb init -p node.js --region $AWS_REGION
           eb use Abid-env-1
-          eb deploy only
-        #--label github-actions-${{ github.run_id }} 
+          eb deploy --label github-actions-${{ github.run_id }} 
 
       - name: Upload Vue.js build to S3
         run: |
