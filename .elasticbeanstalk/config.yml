@@ -1,8 +1,8 @@
 branch-defaults:
   main:
-    environment: Prod-env-1
+    environment: Abid-env-11
 global:
-  application_name: prod
+  application_name: abid
   branch: null
   default_ec2_keyname: new_key
   default_platform: Node.js 22 running on 64bit Amazon Linux 2023

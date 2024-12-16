@@ -68,7 +68,7 @@ jobs:
           # Deploy your Node.js app (example using Elastic Beanstalk)
           cd platform
           eb init -p node.js --region $AWS_REGION
-          eb use Prod-env-1
+          eb use Abid-env-1
           eb deploy only
         #--label github-actions-${{ github.run_id }} 
 
