@@ -1,8 +1,8 @@
 branch-defaults:
   main:
-    environment: Platform-env
+    environment: Prod-env-1
 global:
-  application_name: platform
+  application_name: prod
   branch: null
   default_ec2_keyname: new_key
   default_platform: Node.js 22 running on 64bit Amazon Linux 2023
