@@ -69,7 +69,7 @@ jobs:
           cd platform
           eb init -p node.js --region $AWS_REGION
           eb use Backend-3-env
-          eb deploy
+          eb deploy --label github-actions-${{ github.run_id }} 
 
       - name: Upload Vue.js build to S3
         run: |
