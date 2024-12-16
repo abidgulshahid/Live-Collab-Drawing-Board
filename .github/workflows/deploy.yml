@@ -30,7 +30,7 @@ jobs:
 
       - name: Install dependencies for Node.js
         run: |
-          cd backend  # Change to your Node.js directory
+          cd platform  # Change to your Node.js directory
           npm install
 
       - name: Deploy to AWS
