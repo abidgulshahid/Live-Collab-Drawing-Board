@@ -40,7 +40,7 @@ jobs:
           AWS_REGION: 'us-east-1'  # Change to your AWS region
         run: |
           # Deploy your Node.js app (example using Elastic Beanstalk)
-          cd backend
+          cd platform
           eb init -p node.js --region $AWS_REGION
           eb deploy
 
