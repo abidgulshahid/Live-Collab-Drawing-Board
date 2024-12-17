@@ -96,6 +96,10 @@ wsApp.ws('/*', {
           targetUserSocket.close(); // Optionally close the connection
         }
       }
+      else if (data.type === 'message') {
+        broadcast({ type: 'message', username: data.username, text: data.text });
+    } 
+      
 
  
 
@@ -189,4 +193,6 @@ function broadcastUserList() {
     socket.send(userListMessage);
   }
 }
-
+const broadcast = (data) => {
+  wsApp.publish('chat', JSON.stringify(data), false); // Publish to all clients
+};
