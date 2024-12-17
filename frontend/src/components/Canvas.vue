@@ -3,7 +3,7 @@
       <v-row no-gutters class="justify-center">
     
   
-        <v-col class="justify-center">
+        <v-col class="justify-center" cols="8">
           <v-card class="drawing-card mx-auto elevation-10 rounded-lg">
             <v-card-actions class="d-flex justify-space-between">
               <v-btn color="secondary" @click="toggleEraser" class="mr-2">
@@ -21,6 +21,13 @@
                 v-model="selectedPenSize"
                 :items="penSizes"
                 label="Select Pen Size"
+                class="ml-2"
+                color="black"
+              ></v-select>
+              <v-select
+                v-model="shapeType"
+                :items="['line', 'rectangle', 'circle']"
+                label="Select Shape"
                 class="ml-2"
                 color="black"
               ></v-select>
@@ -44,25 +51,21 @@
   
         
   
-        <v-card class="mx-auto" style="margin-top: 20px; padding: 10px;">
-          <h3>Connected Users</h3>
-          <v-list>
-            <v-list-item-group>
-              <v-list-item v-for="user in connectedUsers" :key="user">
-                <v-list-item-content>
-                  <v-list-item-title>{{ user }}</v-list-item-title>
-                  <canvas
-                    v-if="user === currentUser"
-                    :style="{ position: 'absolute', left: cursorX + 'px', top: cursorY + 'px' }"
-                    width="20"
-                    height="20"
-                    class="cursor"
-                  ></canvas>
-                </v-list-item-content>
-              </v-list-item>
-            </v-list-item-group>
-          </v-list>
-        </v-card>
+        <v-col class="sidebar" cols="4">
+          <v-card class="mx-auto" style="margin-top: 20px; padding: 10px;">
+            <h3>Connected Users ({{ connectedUsers.length }})</h3>
+            <v-list>
+              <v-list-item-group>
+                <v-list-item v-for="user in connectedUsers" :key="user">
+                  <v-list-item-content>
+                    <v-list-item-title>{{ user }}</v-list-item-title>
+                  </v-list-item-content>
+                
+                </v-list-item>
+              </v-list-item-group>
+            </v-list>
+          </v-card>
+        </v-col>
   
         <v-snackbar
           v-model="showSnackbar"
@@ -112,10 +115,6 @@
       const username = ref(localStorage.getItem('username'));
       const colors = ref(['#000000', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF']);
       const selectedColor = ref('#000000');
-      const inviteUsername = ref('');
-      const inviteDialog = ref(false);
-      const inviteFrom = ref('');
-      const shareCount = ref(0);
       const connectedUsers = ref([]);
       const penSizes = ref([1, 2, 5, 10, 15]);
       const selectedPenSize = ref(2);
@@ -127,6 +126,7 @@
       }
       const isEraser = ref(false); // New state for eraser mode
       const drawnLines = ref([]); // Store drawn lines for redrawing
+      const shapeType = ref('line'); // Default shape type
 
 
 
@@ -150,13 +150,11 @@
         };
   
         socket.value.onmessage = (event) => {
-          console.log(event, 'event')
-          const line = JSON.parse(event.data);
-        
-          if (line.type === 'user-connected') {
-            connectedUsers.value.push(line.username); // Add new user to the list
+          const line = JSON.parse(event.data);        
+          if (line.type === 'user-list') {
+            connectedUsers.value = line.users; // Update connected users
           } else if (line.type === 'user-disconnected') {
-            connectedUsers.value = connectedUsers.value.filter(user => user !== line.username); // Remove user from the list
+            connectedUsers.value = connectedUsers.value.filter(user => user !== line.users); // Remove user from the list
           } else if (line.type === 'cursor-update') {
             drawCursor(line.username, line.x, line.y);
           } else if (line.type === 'eraser') {
@@ -197,24 +195,51 @@
       const draw = (event) => {
         if (!isDrawing.value) return;
         const { offsetX, offsetY } = event;
+
         if (isEraser.value) {
-          // Send eraser action to the server
-          socket.value.send(JSON.stringify({
-            type: 'eraser',
-            x: offsetX,
-            y: offsetY,
-            penSize: selectedPenSize.value,
-          }));
-          // Clear the area on the local canvas
-          ctx.value.clearRect(offsetX - selectedPenSize.value / 2, offsetY - selectedPenSize.value / 2, selectedPenSize.value, selectedPenSize.value);
+            // Send eraser action to the server
+            socket.value.send(JSON.stringify({
+                type: 'eraser',
+                x: offsetX,
+                y: offsetY,
+                penSize: selectedPenSize.value,
+            }));
+            // Clear the area on the local canvas
+            ctx.value.clearRect(offsetX - selectedPenSize.value / 2, offsetY - selectedPenSize.value / 2, selectedPenSize.value, selectedPenSize.value);
         } else {
-          drawLine(offsetX, offsetY, lastX.value, lastY.value);
-          socket.value.send(JSON.stringify({
-            x: offsetX,
-            y: offsetY,
-            lastX: lastX.value,
-            lastY: lastY.value,
-          }));
+            if (shapeType.value === 'rectangle') {
+                drawRectangle(offsetX, offsetY, lastX.value, lastY.value);
+                socket.value.send(JSON.stringify({
+                    type: 'rectangle',
+                    x: offsetX,
+                    y: offsetY,
+                    lastX: lastX.value,
+                    lastY: lastY.value,
+                    penSize: selectedPenSize.value,
+                    color: selectedColor.value,
+                }));
+            } else if (shapeType.value === 'circle') {
+                drawCircle(offsetX, offsetY, lastX.value, lastY.value);
+                socket.value.send(JSON.stringify({
+                    type: 'circle',
+                    x: offsetX,
+                    y: offsetY,
+                    lastX: lastX.value,
+                    lastY: lastY.value,
+                    penSize: selectedPenSize.value,
+                    color: selectedColor.value,
+                }));
+            } else {
+                drawLine(offsetX, offsetY, lastX.value, lastY.value);
+                socket.value.send(JSON.stringify({
+                    x: offsetX,
+                    y: offsetY,
+                    lastX: lastX.value,
+                    lastY: lastY.value,
+                    penSize: selectedPenSize.value,
+                    color: selectedColor.value,
+                }));
+            }
         }
         [lastX.value, lastY.value] = [offsetX, offsetY];
       };
@@ -270,6 +295,18 @@
           ctx.value.stroke();
         });
       };
+
+      console.log(connectedUsers, 'connectedUsers')
+  
+      const removeUser = (username) => {
+        // Send a disconnect message to the server
+        socket.value.send(JSON.stringify({
+          type: 'disconnect',
+          username: username,
+        }));
+        // Remove user from the local list
+        connectedUsers.value = connectedUsers.value.filter(user => user !== username);
+      };
   
       return {
         canvas,
@@ -286,6 +323,7 @@
         isEraser,
         toggleEraser,
         redrawCanvas,
+        removeUser,
       };
     },
   };

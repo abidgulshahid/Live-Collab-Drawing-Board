@@ -1,4 +1,3 @@
-// importing libraries and modules
 const express = require('express');
 const mongoose = require('mongoose');
 require('dotenv').config();
@@ -28,7 +27,7 @@ const userSockets = new Map();
 
 let clients = [];
 
-const connectedUsers = new Set(); 
+let connectedUsers = [];
 const activeSessions = new Map(); 
 
 // WebSocket connection handling
@@ -43,7 +42,8 @@ wsApp.ws('/*', {
       if (data.type === 'register') {
         const { username } = data;
         userSockets.set(username, ws); 
-        connectedUsers.add(username); 
+        connectedUsers.push({ username: data.username, uuid: data.uuid });
+        broadcastUserList(); 
 
       }
 
@@ -84,10 +84,10 @@ wsApp.ws('/*', {
         }
       }
 
-      // Handle remove user command
       if (data.type === 'remove-user') {
         const { username } = data;
         const targetUserSocket = getUserSocket(username);
+        connectedUsers = connectedUsers.filter(user => user.username !== data.username);
         if (targetUserSocket) {
           targetUserSocket.send(JSON.stringify({
             type: 'remove-user',
@@ -104,9 +104,6 @@ wsApp.ws('/*', {
 
       }
 
-
-      // Broadcast the drawing data to all clients
-
       ws.publish('draw', decodedMessage, isBinary);
 
    
@@ -116,9 +113,8 @@ wsApp.ws('/*', {
     for (const [username, socket] of userSockets.entries()) {
         if (socket === ws) {
             userSockets.delete(username);
-            connectedUsers.delete(username);
+            connectedUsers = connectedUsers.filter(user => user.username !== username);
 
-            // Remove the user from active sessions
             activeSessions.delete(username);
             for (const peers of activeSessions.values()) {
                 peers.delete(username);
@@ -126,7 +122,6 @@ wsApp.ws('/*', {
 
             console.log(`${username} disconnected`);
 
-            // Notify all clients about the updated user list
             broadcastUserList();
             break;
         }
@@ -180,20 +175,18 @@ app.use("/api/v1/user", userRouter);
 // Function to broadcast the list of connected users to all clients
 
 function broadcastUserList() {
-
   const userList = Array.from(connectedUsers);
-  const message = JSON.stringify({
-    type: 'user-list',
-    users: userList
-  });
 
-  // Send the user list to all connected clients
+  const userListMessage = JSON.stringify({
+    type: 'user-list',
+    users: connectedUsers.map(user => user.username),
+});
+
+
+
+  console.log('Broadcasting user list:', userList); // Log the user list being broadcasted
   for (const socket of userSockets.values()) {
-    socket.send(message);
+    socket.send(userListMessage);
   }
 }
 
-
-// app.listen(port, () => {
-//   console.log(`Example app listening on port ${port}`)
-// })
