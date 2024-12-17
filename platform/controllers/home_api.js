@@ -21,7 +21,7 @@ exports.home_api = async (req, res) => {
         .json({ 
             "data": user, 
             'username': user.username,
-          'message': 'Login Successfully'
+          'message': ' Successfully'
           
 
          });

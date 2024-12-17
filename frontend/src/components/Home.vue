@@ -136,7 +136,6 @@ export default {
         })
         console.log(response.data.data)
         sessions.value = response.data.data; 
-        console.log(sessions.length, 'asdsad')
       } catch (error) {
         console.error('Error fetching sessions:', error);
       }
@@ -149,7 +148,7 @@ export default {
     const deleteSession = async (uuid) => {
       try {
         console.log(uuid, 'uuid ')
-        await axios.post('http://localhost:4000/api/v1/user/deleteSessions/', {
+        const response = await axios.post('http://localhost:4000/api/v1/user/deleteSessions/', {
           uuid: uuid
         }, {
           headers: {
@@ -158,7 +157,11 @@ export default {
             access_token: localStorage.getItem('access_token'),
           }
         });
+        console.log(response)
+        console.log("HERE IN DELETED SESSIOns")
+        console.log(sessions, 'asds')
         sessions.value = sessions.value.filter(session => session._id !== uuid);
+
         console.log('Session deleted successfully');
         
       } catch (error) {

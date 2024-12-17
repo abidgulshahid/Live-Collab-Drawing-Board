@@ -24,7 +24,7 @@ exports.ListBoards = async (req, res) => {
         .status(200)
         .json({          
             data: getBoards, 
-            'message': 'Login Successfully'
+            'message': 'Fetched Successfully'
          });
 
       }

@@ -32,7 +32,7 @@ exports.CreateBoard = async (req, res) => {
         .status(200)
         .json({          
             'uuid': randomUUID,
-            'message': 'Login Successfully'
+            'message': 'Created Successfully'
          });
 
       }
