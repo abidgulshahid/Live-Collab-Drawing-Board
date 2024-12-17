@@ -1,46 +1,46 @@
-MEVN Live Collaboration Drawing Tool
+# MEVN Live Collaboration Drawing Tool
 
 A real-time collaborative drawing application built with MEVN (MongoDB, Express.js, Vue.js, Node.js), Redis, and AWS. It supports user authentication, profile management, and JWT-based logout. Users can draw together in real time, use various tools, and customize their drawing experience.
 
-Features 🚀
-	1.	User Authentication
-	•	JWT-based secure authentication.
-	2.	Profile Management
-	•	Manage and update user details seamlessly.
-	3.	Logout with JWT Blacklisting
-	•	Ensures secure logout by blacklisting JWT tokens using Redis.
-	4.	Live Collaboration Drawing Tool 🎨
-	•	Real-time collaborative canvas.
-	•	Features include:
-	•	Pen tool (adjustable size and color).
-	•	Eraser tool.
-	•	Live user connections display.
+### Features 🚀
+	1.User Authentication
+	•JWT-based secure authentication.
+	2.Profile Management
+	•Manage and update user details seamlessly.
+	3.Logout with JWT Blacklisting
+	•Ensures secure logout by blacklisting JWT tokens using Redis.
+	4.Live Collaboration Drawing Tool 🎨
+	•Real-time collaborative canvas.
+	•Features include:
+	•Pen tool (adjustable size and color).
+	•Eraser tool.
+	•Live user connections display.
 
-Tech Stack 🛠️
-	•	Backend:
-	•	Node.js 22, Express.js
-	•	MongoDB for data storage
-	•	Redis for JWT blacklisting
-	•	Frontend:
-	•	Vue.js 3
-	•	Vuetify for UI components
-	•	Cloud Infrastructure:
-	•	AWS EC2 for virtual servers
-	•	AWS EBS for application deployment
-	•	AWS S3 for hosting static assets
-	•	CI/CD:
-	•	GitHub Actions for automated deployment pipelines
+### Tech Stack 🛠️
+	•Backend:
+	•Node.js 22, Express.js
+	•MongoDB for data storage
+	•Redis for JWT blacklisting
+	•Frontend:
+	•Vue.js 3
+	•Vuetify for UI components
+	•Cloud Infrastructure:
+	•AWS EC2 for virtual servers
+	•AWS EBS for application deployment
+	•AWS S3 for hosting static assets
+	•CI/CD:
+	•GitHub Actions for automated deployment pipelines
 
 Setup Instructions 🛠️
 
-Prerequisites
+### Prerequisites
 
 Ensure you have the following installed:
-	•	Node.js (v22+)
-	•	MongoDB
-	•	Redis
-	•	AWS CLI configured (if deploying to AWS)
-	•	Git
+•Node.js (v22+)
+•MongoDB
+•Redis
+•AWS CLI configured (if deploying to AWS)
+•Git
 
 1. Clone the Repository
 
@@ -115,7 +115,6 @@ name: Deploy to AWS EC2
 on:
   push:
     branches: [main]
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
