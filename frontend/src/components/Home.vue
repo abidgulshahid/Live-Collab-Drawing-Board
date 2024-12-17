@@ -29,6 +29,9 @@
         <th class="text-left">
           Action
         </th>
+        <th class="text-left">
+          Delete
+        </th>
       </tr>
     </thead>
 
@@ -39,6 +42,9 @@
         <td>
           <v-btn @click="goToSession(session.uuid)"> Go to Session</v-btn>
         
+        </td>
+        <td>
+          <v-btn color="red" @click="deleteSession(session._id)">Delete</v-btn>
         </td>
       </tr>
 
@@ -140,6 +146,26 @@ export default {
       router.push({ path: `/board/${uuid}` }); 
     };
 
+    const deleteSession = async (uuid) => {
+      try {
+        console.log(uuid, 'uuid ')
+        await axios.post('http://localhost:4000/api/v1/user/deleteSessions/', {
+          uuid: uuid
+        }, {
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Content-type': 'application/json',
+            access_token: localStorage.getItem('access_token'),
+          }
+        });
+        sessions.value = sessions.value.filter(session => session._id !== uuid);
+        console.log('Session deleted successfully');
+        
+      } catch (error) {
+        console.error('Error deleting session:', error);
+      }
+    };
+
     onMounted(() => {
       fetchSessions(); 
     });
@@ -152,6 +178,7 @@ export default {
       closeModal,
       createSession,
       goToSession,
+      deleteSession,
     };
   },
 };

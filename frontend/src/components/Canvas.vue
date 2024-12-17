@@ -22,13 +22,6 @@
               class="ml-2"
               color="black"
             ></v-select>
-            <v-select
-              v-model="shapeType"
-              :items="['line', 'rectangle', 'circle']"
-              label="Select Shape"
-              class="ml-2"
-              color="black"
-            ></v-select>
             <v-btn color="primary" @click="saveCanvas">Save Drawing</v-btn>
           </v-card-actions>
           <v-card-text>
@@ -63,13 +56,16 @@
         </v-card>
       </v-col>
       <v-col class="sidebar" cols="4">
-        <v-card class="mx-auto" style="margin-top: 20px; padding: 10px;">
+        <v-card class="mx-auto cr-class" style="margin-top: 20px; padding: 10px; background-color: whitesmoke;">
           <h3>Connected Users ({{ connectedUsers.length }})</h3>
-          <v-list>
+          <v-list style="background-color: whitesmoke; color: black;">
             <v-list-item-group>
               <v-list-item v-for="user in connectedUsers" :key="user">
                 <v-list-item-content>
-                  <v-list-item-title>{{ user }}</v-list-item-title>
+                  <v-list-item-title>
+                    <span class="online-bubble"></span>
+                    {{ user }}
+                  </v-list-item-title>
                 </v-list-item-content>
               </v-list-item>
             </v-list-item-group>
@@ -135,6 +131,14 @@ export default {
     const drawnLines = ref([]);
     const shapeType = ref('line');
 
+    const updateDrawingSettings = () => {
+      socket.value.send(JSON.stringify({
+        type: 'settings-update',
+        color: selectedColor.value,
+        penSize: selectedPenSize.value,
+      }));
+    };
+
     onMounted(() => {
       ctx.value = canvas.value.getContext('2d');
       socket.value = new WebSocket(`ws://localhost:3001/boards/${getCurrentGroupId()}`);
@@ -149,6 +153,11 @@ export default {
       };
 
       socket.value.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'settings-update') {
+          selectedColor.value = data.color;
+          selectedPenSize.value = data.penSize;
+        }
         const line = JSON.parse(event.data);
         if (line.type === 'user-list') {
           connectedUsers.value = Array.from(new Set(line.users));
@@ -238,6 +247,7 @@ export default {
             color: selectedColor.value,
           }));
         }
+        updateDrawingSettings();
       }
       [lastX.value, lastY.value] = [offsetX, offsetY];
     };
@@ -382,5 +392,19 @@ export default {
   width: 470px;
   max-height: 400px;
   overflow-y: auto;
+}
+
+.cr-class {
+  background-color: aqua;
+  
+}
+
+.online-bubble {
+  display: inline-block;
+  width: 10px; /* Adjust size as needed */
+  height: 10px; /* Adjust size as needed */
+  border-radius: 50%;
+  background-color: green; /* Green color for online status */
+  margin-right: 5px; /* Space between bubble and username */
 }
 </style>

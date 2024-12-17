@@ -108,6 +108,24 @@ wsApp.ws('/*', {
 
       }
 
+      if (data.type === 'settings-update') {
+        const { color, penSize, username } = data;
+        // Broadcast the settings update to all users in the same session
+        const sessionClients = activeSessions.get(data.sessionId);
+        if (sessionClients) {
+            for (const user of sessionClients) {
+                const userSocket = getUserSocket(user);
+                if (userSocket) {
+                    userSocket.send(JSON.stringify({
+                        type: 'settings-update',
+                        color: color,
+                        penSize: penSize,
+                    }));
+                }
+            }
+        }
+    }
+
       ws.publish('draw', decodedMessage, isBinary);
 
    
