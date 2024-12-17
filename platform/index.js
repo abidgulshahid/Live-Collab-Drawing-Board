@@ -58,7 +58,6 @@ wsApp.ws('/*', {
         activeSessions.get(sessionId).add(from);
         activeSessions.get(sessionId).add(to);
     
-        // Notify the inviter
         const inviterSocket = getUserSocket(from);
         if (inviterSocket) {
             inviterSocket.send(JSON.stringify({
@@ -84,33 +83,13 @@ wsApp.ws('/*', {
         }
       }
 
-      if (data.type === 'remove-user') {
-        const { username } = data;
-        const targetUserSocket = getUserSocket(username);
-        connectedUsers = connectedUsers.filter(user => user.username !== data.username);
-        if (targetUserSocket) {
-          targetUserSocket.send(JSON.stringify({
-            type: 'remove-user',
-            message: `You have been removed from the drawing board.`
-          }));
-          targetUserSocket.close(); // Optionally close the connection
-        }
-      }
-      else if (data.type === 'message') {
+
+       if (data.type === 'message') {
         broadcast({ type: 'message', username: data.username, text: data.text });
     } 
-      
-
- 
-
-      if (data.signal == 'true'){
-        console.log("HELLO WORLD")
-
-      }
 
       if (data.type === 'settings-update') {
         const { color, penSize, username } = data;
-        // Broadcast the settings update to all users in the same session
         const sessionClients = activeSessions.get(data.sessionId);
         if (sessionClients) {
             for (const user of sessionClients) {
