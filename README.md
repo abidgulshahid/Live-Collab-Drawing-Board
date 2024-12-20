@@ -1,56 +1,45 @@
-# MEVN Live Collaboration Drawing Tool
+# Live Collaboration Drawing Tool (MEVN)
 
-A real-time collaborative drawing application built with MEVN (MongoDB, Express.js, Vue.js, Node.js), Redis, and AWS. It supports user authentication, profile management, and JWT-based logout. Users can draw together in real time, use various tools, and customize their drawing experience.
+[](https://github.com/abidgulshahid/Live-Collab-Drawing-Board#mevn-live-collaboration-drawing-tool)
 
-### Features 🚀
-	1.User Authentication
-	•JWT-based secure authentication.
-	2.Profile Management
-	•Manage and update user details seamlessly.
-	3.Logout with JWT Blacklisting
-	•Ensures secure logout by blacklisting JWT tokens using Redis.
-	4.Live Collaboration Drawing Tool 🎨
-	•Real-time collaborative canvas.
-	•Features include:
-	•Pen tool (adjustable size and color).
-	•Eraser tool.
-	•Live user connections display.
+A real-time collaborative drawing application built with MEVN (MongoDB, Express.js, Vue.js, Node.js), Redis, and AWS. It supports user authentication, profile management, and JWT-based logout. Users can draw together in real time, can chat each other, use various tools, and customise their drawing experience.
 
-### Tech Stack 🛠️
-	•Backend:
-	•Node.js 22, Express.js
-	•MongoDB for data storage
-	•Redis for JWT blacklisting
-	•Frontend:
-	•Vue.js 3
-	•Vuetify for UI components
-	•Cloud Infrastructure:
-	•AWS EC2 for virtual servers
-	•AWS EBS for application deployment
-	•AWS S3 for hosting static assets
-	•CI/CD:
-	•GitHub Actions for automated deployment pipelines
+## Features:
+
+ - JWT-based secure authentication.
+ - Profile Management
+ - Logout with JWT's Tokens Blacklisting with Redis
+ - Live Collaboration Drawing Tool (Pen Size, Colours, Erasor, GroupChat Room)
+ - Live User Connection Display 
+
+### Tech Stack
+#### Backend: 
+- Node.js (Express.js)
+- Mongodb
+- Redis
+- Json Web Tokens
+#### Frontend: 
+- Vue.js 3
+- Vuetify For UI Components
+#### Cloud Infrastructure
+- AWS EC2 for virtual servers
+- AWS Elastic Bean Stalk for application deployment 
+- AWS S3 Bucket  for hosting static assets
+#### CI/CD
+- Github Actions for automated deployment pipelines
+
+### Setup Project: 
+#### Backend: 
+	Clone this Repo
+	Go to platform folder
+	Run "npm install"
+	Run node index.js
+	You will see the backend is running
+#### Frontend: 
+	G to the frontend folder
+	Run "npm install"
+	Run npm run serve
+	
 
 
-Deployment Instructions 🚀
-
-Using GitHub Actions
-	1.Set up a .github/workflows/deploy.yml file for your CI/CD pipeline.
-	2.Add secrets for your AWS credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY) in your GitHub repository settings.
-
-
-
-Future Improvements 🛠️
-	•Add Shapes: Support for different shapes like circles, rectangles, and lines.
-	•Invitation System: Generate sharable links to invite others to collaborate.
-
-License
-
-This project is licensed under the MIT License.
-Contributing 🤝
-Contributions are welcome! Please open an issue or pull request for feature requests, bug fixes, or improvements.
-Contact 📧
-If you have any questions or suggestions, feel free to reach out:
-•Name: Abid Gul Shahid
-•Email: abidgulshahid@gmail.com
 
